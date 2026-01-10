@@ -1,0 +1,8 @@
+dvc
+/data
+/venv
+*.json
+./pycache__/
+*.pyc
+config.local
+.env
