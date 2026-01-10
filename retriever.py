@@ -3,6 +3,7 @@ FAISS-based retriever for document search.
 Handles loading the FAISS index and retrieving relevant documents based on queries.
 """
 
+import os
 from pathlib import Path
 import faiss
 import numpy as np
@@ -11,6 +12,7 @@ from process_data import load_faiss_index, EMBEDDING_MODEL_NAME
 
 # Configuration
 FAISS_INDEX_DIR = Path("data/processed/faiss_index")
+k_default = os.getenv("RETRIEVER_K", 5)
 
 
 class FAISSRetriever:
@@ -51,7 +53,7 @@ class FAISSRetriever:
         self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
         print("✓ Embedding model loaded\n")
     
-    def retrieve_documents(self, query: str, k: int = 5) -> str:
+    def retrieve_documents(self, query: str, k: int = k_default) -> str:
         """
         Retrieve relevant documents from FAISS index based on query.
         
