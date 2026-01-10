@@ -14,6 +14,10 @@ langchain-text-splitters>=0.0.1
 # LLM Integration
 langchain-ollama>=0.1.0
 
+# FastAPI and server
+fastapi>=0.104.0
+uvicorn >=0.24.0
+
 # Embeddings avec sentence-transformers
 sentence-transformers>=2.2.0
 torch>=2.0.0
