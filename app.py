@@ -11,12 +11,18 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from retriever import FAISSRetriever
 
+OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OllamaLLM_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")     
+
 
 # Initialize retriever
 retriever = FAISSRetriever()
 
 # Initialize LLM
-model = OllamaLLM(model="llama3.2")
+model = OllamaLLM(
+    model=OllamaLLM_MODEL,
+    base_url=OLLAMA_URL
+)
 
 # Create the prompt template
 template = """You are a helpful pedagogical assistant. Use the following context from the documents to answer the question at the end.
