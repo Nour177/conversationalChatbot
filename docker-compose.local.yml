@@ -1,0 +1,28 @@
+version: '3.8'
+
+# Docker Compose configuration for using LOCAL Ollama installation
+# Use this file if you have Ollama installed locally and want to use it instead of the container
+# Run with: docker-compose -f docker-compose.local.yml up
+
+services:
+  # FastAPI application service
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: conversational-chatbot
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount data directory to persist FAISS index
+      - ./data:/app/data
+    environment:
+      # Use local Ollama installation
+      # For Windows/Mac Docker Desktop:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # For Linux, use the host IP instead:
+      # - OLLAMA_BASE_URL=http://172.17.0.1:11434
+    extra_hosts:
+      # Add host.docker.internal for Linux compatibility
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

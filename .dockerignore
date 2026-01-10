@@ -1,18 +1,50 @@
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
-env/
 venv/
-.build/
-.pytest_cache/
-.dockerignore
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
 .git/
 .gitignore
-Dockerfile
-*.egg-info/
-dist/
-build/
-data/raw/
-data/processed/faiss_index/index.faiss
+
+# DVC
+.dvc/
+*.dvc
+
+# Data (will be mounted as volume)
+# data/raw/
+# data/processed/
+
+# Documentation
+*.md
+README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

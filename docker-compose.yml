@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # FastAPI application service
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: conversational-chatbot
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount data directory to persist FAISS index
+      - ./data:/app/data
+    environment:
+      # Use Ollama from container (uncomment to use local Ollama instead)
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # Alternative: Use local Ollama (uncomment the line below and comment the one above)
+      # - OLLAMA_BASE_URL=http://host.docker.internal:11434  # For Windows/Mac
+      # - OLLAMA_BASE_URL=http://172.17.0.1:11434  # For Linux
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+
+  # Ollama service (optional - comment out if using local Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-service
+    ports:
+      - "11434:11434"
+    volumes:
+      # Persist Ollama models
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+    # Uncomment the following lines to pull the model on startup
+    # entrypoint: ["/bin/sh", "-c"]
+    # command:
+    #   - |
+    #     ollama serve &
+    #     sleep 5
+    #     ollama pull llama3.2
+    #     wait
+
+networks:
+  chatbot-network:
+    driver: bridge
+
+volumes:
+  ollama-data:
+    driver: local
