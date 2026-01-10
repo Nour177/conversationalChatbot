@@ -11,16 +11,17 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from retriever import FAISSRetriever
 
-# Get Ollama base URL from environment variable (defaults to localhost)
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OllamaLLM_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")     
+
 
 # Initialize retriever
 retriever = FAISSRetriever()
 
-# Initialize LLM with configurable base URL
+# Initialize LLM
 model = OllamaLLM(
-    model="llama3.2",
-    base_url=OLLAMA_BASE_URL
+    model=OllamaLLM_MODEL,
+    base_url=OLLAMA_URL
 )
 
 # Create the prompt template

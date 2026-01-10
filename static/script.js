@@ -27,7 +27,7 @@ async function sendMessage() {
         // Show bot's response
         const botMsgDiv = document.createElement("div");
         botMsgDiv.classList.add("message", "bot");
-        botMsgDiv.textContent = data.answer;
+        botMsgDiv.innerHTML = marked.parse(data.answer);
         chatMessages.appendChild(botMsgDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     } catch (err) {
