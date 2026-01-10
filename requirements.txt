@@ -1,0 +1,26 @@
+# Dépendances pour le pipeline d'ingestion et de traitement des données
+
+# Gestion de version de données
+dvc
+
+# Traitement des PDFs
+pypdf>=3.17.0
+langchain-community>=0.0.20
+
+# Traitement de texte et segmentation
+langchain-core>=0.1.0
+langchain-text-splitters>=0.0.1
+
+# LLM Integration
+langchain-ollama>=0.1.0
+
+# Embeddings avec sentence-transformers
+sentence-transformers>=2.2.0
+torch>=2.0.0
+
+# Index vectoriel FAISS
+faiss-cpu>=1.7.4
+
+# Utilitaires
+numpy>=1.24.0
+pandas>=2.0.0
