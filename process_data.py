@@ -6,7 +6,6 @@ Script d'ingestion et de prétraitement des données PDF
 - Construction de l'index FAISS pour la recherche vectorielle
 """
 
-import os
 import re
 import time
 from pathlib import Path
@@ -20,6 +19,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from mlflow_tracking import EmbeddingTracker
 import mlflow
+
 
 
 #---------------- CONFIGURATION ----------------------------
