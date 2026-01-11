@@ -4,11 +4,14 @@ Handles loading the FAISS index and retrieving relevant documents based on queri
 """
 
 import os
+import time
 from pathlib import Path
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from process_data import load_faiss_index, EMBEDDING_MODEL_NAME
+from mlflow_tracking import EmbeddingTracker
+import mlflow
 
 # Configuration
 FAISS_INDEX_DIR = Path("data/processed/faiss_index")
@@ -64,28 +67,57 @@ class FAISSRetriever:
         Returns:
             Formatted string of relevant document chunks
         """
+        total_start = time.time()
+        
         # Encode the query
+        embedding_start = time.time()
         query_embedding = self.embedding_model.encode(
             [query], 
             convert_to_numpy=True, 
             show_progress_bar=False
         )
+        embedding_duration = time.time() - embedding_start
         
         # Normalize the query embedding (same as in process_data.py)
         faiss.normalize_L2(query_embedding)
         
         # Search in FAISS index
         k = min(k, self.index.ntotal)  # Ensure k doesn't exceed total vectors
+        search_start = time.time()
         distances, indices = self.index.search(
             query_embedding.astype('float32'), 
             k
         )
+        search_duration = time.time() - search_start
         
         # Retrieve relevant chunks
         relevant_chunks = []
         for idx in indices[0]:
             if idx < len(self.chunks):
                 relevant_chunks.append(self.chunks[idx].page_content)
+        
+        total_duration = time.time() - total_start
+        
+        # Calculate average similarity 
+        avg_similarity = float(distances[0].mean()) if len(distances[0]) > 0 else None
+        
+        # Log to MLflow
+        try:
+            EmbeddingTracker.log_retrieval_operation(
+                query=query,
+                k=k,
+                num_results=len(relevant_chunks),
+                retrieval_duration=total_duration,
+                embedding_duration=embedding_duration,
+                search_duration=search_duration,
+                avg_similarity=avg_similarity,
+                metadata={
+                    "index_size": self.index.ntotal,
+                    "embedding_model": EMBEDDING_MODEL_NAME,
+                }
+            )
+        except Exception as e:
+            pass
         
         # Format the retrieved documents
         formatted_docs = "\n\n".join([

@@ -6,3 +6,4 @@ dvc
 *.pyc
 config.local
 .env
+mlruns/

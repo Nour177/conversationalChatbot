@@ -1,13 +1,14 @@
 """
 Script d'ingestion et de prétraitement des données PDF
-- Extraction des PDFs → texte
-- Nettoyage et segmentation en chunks
+- Extraction des PDFs vers texte
+- Nettoyage et segmentation en chunks de taille fixe 
 - Création des embeddings avec sentence-transformers
 - Construction de l'index FAISS pour la recherche vectorielle
 """
 
 import os
 import re
+import time
 from pathlib import Path
 from typing import List
 
@@ -17,6 +18,8 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
+from mlflow_tracking import EmbeddingTracker
+import mlflow
 
 
 #---------------- CONFIGURATION ----------------------------
@@ -25,12 +28,12 @@ PROCESSED_DATA_DIR = Path("data/processed")
 FAISS_INDEX_DIR = PROCESSED_DATA_DIR / "faiss_index"
 
 # Paramètres de segmentation
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
+CHUNK_SIZE = 200
+CHUNK_OVERLAP = 50
 
 # Modèle d'embeddings
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"  # Modèle léger et rapide
-# Alternatives: "sentence-transformers/all-mpnet-base-v2" (plus performant mais plus lourd)
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2" 
+
 
 
 # ----------------------INGESTION ET PRÉTRAITEMENT ----------------------------
@@ -64,7 +67,7 @@ def load_pdf_documents(pdf_dir: Path) -> List[Document]:
                 doc.metadata["file_path"] = str(pdf_file)
             documents.extend(docs)
         except Exception as e:
-            print(f"  ⚠️  Erreur lors du chargement de {pdf_file.name}: {e}")
+            print(f" Erreur lors du chargement de {pdf_file.name}: {e}")
     
     print(f"✓ {len(documents)} page(s) chargée(s) au total\n")
     return documents
@@ -159,9 +162,32 @@ def create_embeddings(chunks: List[Document], model_name: str = EMBEDDING_MODEL_
     
     print(f"Création des embeddings pour {len(chunks)} chunk(s)...")
     texts = [chunk.page_content for chunk in chunks]
+    
+    # Track embedding creation with MLflow
+    start_time = time.time()
     embeddings = model.encode(texts, show_progress_bar=True, convert_to_numpy=True)
+    duration = time.time() - start_time
     
     print(f"✓ Embeddings créés: shape {embeddings.shape}\n")
+    
+    # Log to MLflow
+    try:
+        with mlflow.start_run(run_name="embedding_pipeline"):
+            EmbeddingTracker.log_embedding_creation(
+                model_name=model_name,
+                num_chunks=len(chunks),
+                embedding_dim=embeddings.shape[1],
+                chunk_size=CHUNK_SIZE,
+                chunk_overlap=CHUNK_OVERLAP,
+                duration=duration,
+                metadata={
+                    "total_text_length": sum(len(text) for text in texts),
+                    "avg_chunk_length": sum(len(text) for text in texts) / len(texts) if texts else 0,
+                }
+            )
+    except Exception as e:
+        print(f"Warning: MLflow tracking failed: {e}")
+    
     return embeddings, model
 
 
@@ -190,7 +216,7 @@ def build_faiss_index(embeddings: np.ndarray, chunks: List[Document]) -> faiss.I
     # Ajouter les embeddings à l'index
     index.add(embeddings.astype('float32'))
     
-    print(f"✓ Index FAISS créé avec {index.ntotal} vecteur(s) de dimension {dimension}\n")
+    print(f"Index FAISS créé avec {index.ntotal} vecteur(s) de dimension {dimension}\n")
     return index
 
 
@@ -223,7 +249,7 @@ def save_faiss_index(index: faiss.Index, chunks: List[Document], model, output_d
     with open(output_dir / "metadata.pkl", "wb") as f:
         pickle.dump(metadata, f)
     
-    print(f"✓ Index et métadonnées sauvegardés\n")
+    print(f"Index et métadonnées sauvegardés\n")
 
 
 def load_faiss_index(index_dir: Path):
@@ -250,11 +276,11 @@ def load_faiss_index(index_dir: Path):
     with open(metadata_path, "rb") as f:
         metadata = pickle.load(f)
     
-    print(f"✓ Index chargé avec {index.ntotal} vecteur(s)\n")
+    print(f"Index chargé avec {index.ntotal} vecteur(s)\n")
     return index, metadata
 
 
-# PIPELINE PRINCIPAL
+# -------------------------- PIPELINE PRINCIPAL --------------------------
 def main():
     """
     Pipeline complet d'ingestion et de traitement des données.
